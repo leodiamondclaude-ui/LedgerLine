@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ledgerline</title>
+<meta name="description" content="Bookkeeping for firms: set up client companies, scan receipts, and see profit at a glance.">
+<meta name="theme-color" content="#0e1320">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/icon.svg">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="/app.css">
+<script src="/app.js" defer></script>
+</head>
+<body>
+<header class="top">
+  <h1>Ledgerline</h1>
+  <span class="firm" id="firmname"></span>
+  <span class="sync" id="sync" role="status"></span>
+  <span class="topnav" id="topnav" hidden><button class="link" id="go-settings">Team &amp; billing</button><button class="link" id="signout">Sign out</button></span>
+</header>
+<div class="banner" id="banner" hidden></div>
+
+<!-- Sign in, sign up, reset, join -->
+<main class="auth" id="auth" hidden>
+  <section class="card authcard" data-auth="signin">
+    <h2>Sign in</h2>
+    <form id="f-signin" class="stack">
+      <label>Email<input id="si-email" name="email" type="email" autocomplete="email" required></label>
+      <label>Password<input id="si-password" name="password" type="password" autocomplete="current-password" required></label>
+      <button class="btn wide">Sign in</button>
+      <p class="err" role="alert"></p>
+    </form>
+    <p class="alt"><button class="link" data-goauth="forgot">Forgot your password?</button></p>
+    <p class="alt">New to Ledgerline? <button class="link" data-goauth="signup">Start a free trial</button></p>
+  </section>
+  <section class="card authcard" data-auth="signup" hidden>
+    <h2>Start your free trial</h2>
+    <p class="lead">Set up your firm in a minute. No card needed to start.</p>
+    <form id="f-signup" class="stack">
+      <label>Firm name<input id="su-firm" name="firm" required maxlength="80" autocomplete="organization"></label>
+      <label>Your name<input id="su-name" name="name" required maxlength="80" autocomplete="name"></label>
+      <label>Work email<input id="su-email" name="email" type="email" required autocomplete="email"></label>
+      <label>Password<input id="su-password" name="password" type="password" required minlength="10" autocomplete="new-password"><small>At least 10 characters.</small></label>
+      <button class="btn wide">Create account</button>
+      <p class="err" role="alert"></p>
+    </form>
+    <p class="alt">Already have an account? <button class="link" data-goauth="signin">Sign in</button></p>
+  </section>
+  <section class="card authcard" data-auth="forgot" hidden>
+    <h2>Reset your password</h2>
+    <p class="lead">Enter your email and we’ll send a link to choose a new password.</p>
+    <form id="f-forgot" class="stack">
+      <label>Email<input id="fg-email" name="email" type="email" required autocomplete="email"></label>
+      <button class="btn wide">Send reset link</button>
+      <p class="err" role="alert"></p>
+    </form>
+    <p class="alt"><button class="link" data-goauth="signin">Back to sign in</button></p>
+  </section>
+  <section class="card authcard" data-auth="reset" hidden>
+    <h2>Choose a new password</h2>
+    <form id="f-reset" class="stack">
+      <label>New password<input id="rs-password" name="password" type="password" required minlength="10" autocomplete="new-password"><small>At least 10 characters.</small></label>
+      <button class="btn wide">Save and sign in</button>
+      <p class="err" role="alert"></p>
+    </form>
+  </section>
+  <section class="card authcard" data-auth="join" hidden>
+    <h2 id="join-title">Join your team</h2>
+    <p class="lead" id="join-lead"></p>
+    <form id="f-join" class="stack">
+      <label>Your name<input id="jn-name" name="name" required maxlength="80" autocomplete="name"></label>
+      <label>Email<input id="jn-email" name="email" type="email" required autocomplete="email"></label>
+      <label>Password<input id="jn-password" name="password" type="password" required minlength="10" autocomplete="new-password"><small>At least 10 characters.</small></label>
+      <button class="btn wide">Join</button>
+      <p class="err" role="alert"></p>
+    </form>
+  </section>
+</main>
+
+<!-- Signed in -->
+<div id="app" hidden>
+  <div class="band" id="coband" hidden><div class="lfilter" id="lfilter" hidden></div><div class="tabs" id="cotabs" role="tablist" aria-label="Companies"></div></div>
+  <datalist id="lablist"></datalist>
+  <main class="wrap">
+    <section id="empty" hidden><div class="card"><h2>No companies yet</h2><p class="lead" id="empty-msg"></p></div></section>
+
+    <section id="setup" class="narrow" hidden><div class="card">
+      <h2>Set up a company</h2>
+      <p class="lead">Enter where the company stands today. After that, add receipts as they come in and the books stay current.</p>
+      <form id="f-setup">
+        <div class="fields">
+          <label class="full">Company name<input id="sf-name" name="name" required maxlength="60"></label>
+          <label>Label<input id="sf-label" name="label" maxlength="30" list="lablist" placeholder="Optional, e.g. Retail"></label>
+          <label>Figures as of<input id="sf-asof" type="date" name="asOf" required></label>
+          <label>Cash in the bank<input id="sf-cash" name="cash" type="number" step="0.01" placeholder="0.00"></label>
+          <label>Revenue so far this year<input id="sf-rev" name="revenueYtd" type="number" step="0.01" min="0" placeholder="Optional"></label>
+          <label>Expenses so far this year<input id="sf-exp" name="expensesYtd" type="number" step="0.01" min="0" placeholder="Optional"></label>
+        </div>
+        <div class="row-actions"><button class="btn">Create company</button><button type="button" class="btn ghost" id="sf-cancel">Cancel</button></div>
+        <p class="err" role="alert"></p>
+      </form>
+      <p class="note">Revenue and expenses so far this year make this year’s reports complete. Leave them blank for a new company.</p>
+    </div></section>
+
+    <nav id="nav" hidden>
+      <button data-v="overview" aria-current="true">Overview</button>
+      <button data-v="ledger">Ledger</button>
+      <button data-v="reports">Reports</button>
+    </nav>
+
+    <section id="overview" hidden>
+      <div class="actions"><button class="btn" id="go-scan">Add a receipt</button></div>
+      <div class="kpis" id="kpis"></div>
+      <div class="card"><h2>Income vs expenses, last 6 months</h2><div id="chart"></div></div>
+      <div class="card"><h2>Expenses by category, this month</h2><div id="cats"></div></div>
+    </section>
+
+    <section id="ledger" hidden>
+      <div class="card" id="scan" hidden><h2>Scan receipts</h2>
+        <div class="inline"><input type="file" id="rf" accept="image/*" multiple><button class="btn" id="rgo">Read receipts</button><span class="mute" id="rst"></span></div>
+        <div class="scroll"><table><tbody id="rq"></tbody></table></div>
+        <div class="row-actions" id="ract" hidden><button class="btn" id="radd">Add all to ledger</button><button class="btn ghost" id="rclr">Discard</button></div>
+        <p class="note">Claude reads each photo and fills in the details. Check the amounts and dates, then add them. Photos are not stored, so keep the originals.</p>
+      </div>
+      <div class="card"><h2 id="txf-title">Record a transaction</h2>
+        <form id="f-tx" class="inline-form">
+          <label>Date<input id="tx-date" type="date" name="date" required></label>
+          <label>Type<select id="tx-type" name="type"><option value="in">Money in</option><option value="out">Money out</option></select></label>
+          <label>Category<select id="tx-cat" name="category"></select></label>
+          <label class="grow">Description<input id="tx-desc" name="description" required maxlength="120"></label>
+          <label>Amount<input id="tx-amt" name="amount" type="number" step="0.01" min="0.01" required class="amt"></label>
+          <button class="btn" id="tx-save">Add transaction</button><button type="button" class="btn ghost" id="tx-cancel" hidden>Cancel</button>
+        </form>
+        <p class="err" id="tx-err" role="alert"></p>
+      </div>
+      <div class="card"><div class="cardhead"><h2>All transactions</h2><span class="tools"><a class="btn ghost sm" id="csv" download>Download CSV</a><button class="btn ghost sm" id="imp">Import CSV</button></span></div>
+        <textarea id="ib" hidden rows="5" placeholder="Paste rows as: date,type,category,description,amount (type is in or out, date is YYYY-MM-DD). Then press Import CSV again."></textarea>
+        <p class="err" id="imp-err" role="alert"></p>
+        <div class="scroll"><table><thead><tr><th>Date</th><th>Description</th><th>Category</th><th class="r">Amount</th><th></th></tr></thead><tbody id="txb"></tbody></table></div></div>
+      <div class="card" id="cocard"><h2>Company</h2>
+        <form id="f-co" class="inline-form"><label class="grow">Name<input id="co-name" name="name" required maxlength="60"></label><label>Label<input id="co-label" name="label" maxlength="30" list="lablist" placeholder="e.g. Retail"></label><button class="btn ghost">Save</button></form>
+        <p class="note">Companies with the same label share a color, and you can show just one label at a time above the company tabs.</p>
+        <div class="row-actions"><button class="btn ghost sm" id="co-del" hidden>Delete this company</button></div>
+      </div>
+    </section>
+
+    <section id="reports" hidden>
+      <div class="pills" id="pills"><button class="pill" data-p="m" aria-pressed="true">This month</button><button class="pill" data-p="q" aria-pressed="false">Last 3 months</button><button class="pill" data-p="y" aria-pressed="false">This year</button><button class="pill" data-p="a" aria-pressed="false">All time</button></div>
+      <div id="rep"></div>
+    </section>
+
+    <section id="settings" hidden>
+      <div class="actions"><button class="btn ghost sm" id="back">← Back to the books</button></div>
+      <div class="card" id="billing" hidden><h2>Plan and billing</h2><p id="bill-status"></p><div class="row-actions"><button class="btn" id="bill-checkout" hidden>Choose a plan</button><button class="btn ghost" id="bill-portal" hidden>Manage billing</button></div><p class="err" id="bill-err" role="alert"></p></div>
+      <div class="card" id="team" hidden><h2>Team</h2>
+        <div class="scroll"><table><thead><tr><th>Name</th><th>Access</th><th></th></tr></thead><tbody id="members"></tbody></table></div>
+        <h2 class="sub2">Invite someone</h2>
+        <form id="f-invite" class="inline-form">
+          <label class="grow">Email<input id="iv-email" name="email" type="email" placeholder="Optional, to send it by email"></label>
+          <label>Access<select id="iv-role" name="role"><option value="member">Staff: all companies</option><option value="client">Client: chosen companies</option><option value="admin">Admin: all companies and team</option></select></label>
+          <button class="btn">Create invite link</button>
+        </form>
+        <div id="iv-cos" class="checks" hidden></div>
+        <p class="err" id="iv-err" role="alert"></p>
+        <div id="iv-out" class="linkbox" hidden><input id="iv-link" readonly aria-label="Invite link"><button class="btn ghost sm" id="iv-copy">Copy link</button></div>
+        <div id="invites"></div>
+        <p class="note">Staff see every company. Clients only see the companies you choose. Invite links work for 7 days and only once.</p>
+      </div>
+      <div class="card"><h2>Your account</h2><p class="mute" id="acct"></p>
+        <form id="f-pass" class="inline-form"><label>Current password<input id="pw-cur" name="current" type="password" autocomplete="current-password" required></label><label>New password<input id="pw-new" name="next" type="password" autocomplete="new-password" minlength="10" required></label><button class="btn ghost">Change password</button></form>
+        <p class="err" id="pw-err" role="alert"></p>
+      </div>
+    </section>
+  </main>
+</div>
+</body>
+</html>
