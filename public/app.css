@@ -8,6 +8,7 @@ h1{font-size:18px;font-weight:600;margin:0;letter-spacing:-.01em}
 .firm{color:var(--mute);font-size:14px}
 .sync{font-size:13px;color:var(--mute);margin-left:auto}
 .topnav{display:flex;gap:14px}
+.gear{background:none;border:0;color:var(--mute);cursor:pointer;padding:6px;border-radius:6px;display:inline-flex}.gear svg{pointer-events:none}.gear:hover{color:var(--ink);background:var(--accbg)}
 .banner{background:var(--accbg);color:var(--ink);padding:10px 20px;font-size:14px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
 .banner.bad{background:#3a1f22}
 .wrap{max-width:980px;margin:0 auto;padding:20px max(16px,env(safe-area-inset-right,0px)) 40px max(16px,env(safe-area-inset-left,0px))}

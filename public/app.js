@@ -44,7 +44,7 @@ const sizeBars = root => root.querySelectorAll('[data-w]').forEach(el => { el.st
 
 // ---------- signed out
 function showAuth(name) {
-  $('#auth').hidden = false; $('#app').hidden = true; $('#topnav').hidden = true; $('#banner').hidden = true; $('#firmname').textContent = ''; $('#sync').textContent = '';
+  $('#auth').hidden = false; $('#app').hidden = true; $('#topnav').hidden = true; $('#go-edit').hidden = true; $('#banner').hidden = true; $('#firmname').textContent = ''; $('#sync').textContent = '';
   $$('[data-auth]').forEach(s => { s.hidden = s.dataset.auth !== name; });
   const first = $(`[data-auth="${name}"] input:not([readonly])`); if (first) first.focus();
 }
@@ -99,7 +99,7 @@ function banner() {
 function layout() {
   const app = view === 'app';
   $('#setup').hidden = view !== 'setup'; $('#empty').hidden = view !== 'empty'; $('#settings').hidden = view !== 'settings';
-  $('#nav').hidden = !app;
+  $('#nav').hidden = !app; $('#go-edit').hidden = !app || isClient();
   ['overview', 'ledger', 'reports'].forEach(s => { $('#' + s).hidden = !(app && tab === s); });
   $$('#nav button').forEach(b => b.setAttribute('aria-current', b.dataset.v === tab));
   $('#sf-cancel').hidden = !CUR;
@@ -155,7 +155,7 @@ function ledger() {
   const rows = [...TX].sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id), w = canWrite();
   $('#txb').innerHTML = rows.length ? rows.map(t => `<tr><td class="nowrap">${esc(t.date)}</td><td>${esc(t.description)}</td><td><span class="tag">${esc(t.category)}</span></td><td class="r nowrap ${t.type === 'in' ? 'pos' : 'neg'}">${t.type === 'in' ? '+' : '−'}${usd(t.amount, 2)}</td><td class="r nowrap">${w ? `<button class="link" data-edit="${t.id}">Edit</button> <button class="x" data-del="${t.id}" aria-label="Delete transaction">×</button>` : ''}</td></tr>`).join('') : '<tr><td colspan="5" class="mute">No transactions yet. Add a receipt or record one above.</td></tr>';
   $('#csv').href = `/api/companies/${CUR.id}/export.csv`;
-  $('#cocard').hidden = isClient(); $('#go-edit').hidden = isClient();
+  $('#cocard').hidden = isClient();
   $('#co-del').hidden = !canManage();
   if (document.activeElement !== $('#co-name')) $('#co-name').value = CUR.name;
   if (document.activeElement !== $('#co-label')) $('#co-label').value = CUR.label || '';
