@@ -160,3 +160,16 @@ test('pages are served with a strict content security policy', async () => {
   assert.doesNotMatch(res.headers.get('content-security-policy'), /unsafe-inline/);
   assert.equal((await fetch(base + '/../src/server.js')).headers.get('content-type'), 'text/html; charset=utf-8');
 });
+
+test('email sign-in links work once and expire', async () => {
+  const owner = await firm();
+  const mail = (await owner.call('GET', '/api/me')).data.user.email;
+  const logs = []; const orig = console.log; console.log = (...a) => logs.push(a.join(' '));
+  try { assert.equal((await client().call('POST', '/api/login-link/request', { email: mail })).status, 200); } finally { console.log = orig; }
+  const token = /\?login=([\w-]+)/.exec(logs.join('\n'))[1];
+  const c = client();
+  assert.equal((await c.call('POST', '/api/login-link', { token })).status, 200);
+  assert.equal((await c.call('GET', '/api/me')).data.user.email, mail);
+  assert.equal((await client().call('POST', '/api/login-link', { token })).status, 400, 'single use');
+  assert.equal((await client().call('POST', '/api/login-link/request', { email: 'nobody@example.com' })).status, 200, 'does not reveal accounts');
+});

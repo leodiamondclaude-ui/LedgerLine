@@ -32,7 +32,7 @@ export function openDb(file = process.env.DATABASE_PATH || 'data/ledgerline.db')
     );
     CREATE TABLE IF NOT EXISTS tokens (
       token_hash TEXT PRIMARY KEY,
-      kind TEXT NOT NULL CHECK (kind IN ('invite','reset')),
+      kind TEXT NOT NULL CHECK (kind IN ('invite','reset','login')),
       firm_id INTEGER NOT NULL REFERENCES firms(id) ON DELETE CASCADE,
       user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
       email TEXT,

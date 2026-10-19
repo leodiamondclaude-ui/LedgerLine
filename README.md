@@ -2,7 +2,7 @@
 
 Bookkeeping for firms. Set up each client company with where it stands today, scan receipts with Claude, and see cash and profit at a glance.
 
-- **Easy sign-in:** email and password, password reset links, and invite links for teammates and clients.
+- **Easy sign-in:** email and password, or a one-time sign-in link by email, plus password reset links and invite links for teammates and clients.
 - **One private workspace per firm.** Staff see every company. Clients see only the companies they're given.
 - **Companies in folder tabs** with labels, a ledger you can edit, CSV import and export, and reports.
 - **Receipt scanning:** photos are read by Claude into date, vendor, amount and category for review.
@@ -35,6 +35,7 @@ See `.env.example`. The main settings:
 | `ANTHROPIC_API_KEY` | Turns on receipt scanning (Claude Opus 5.5, low effort, structured output). |
 | `RESEND_API_KEY`, `MAIL_FROM` | Sends invite and reset emails. |
 | `STRIPE_SECRET_KEY`, `STRIPE_PRICE_ID`, `STRIPE_WEBHOOK_SECRET` | Turns on the free trial and subscriptions. Point a Stripe webhook at `/api/stripe/webhook` with the `checkout.session.completed` and `customer.subscription.*` events. |
+| `PRICE_LABEL` | Price shown on the front page after the free-trial line, for example `$49 a month per firm`. |
 | `TRUST_PROXY=1` | Use behind a load balancer so sign-in limits see real visitor addresses. |
 
 ## Deploy
@@ -67,7 +68,7 @@ Back up `/data/ledgerline.db` daily, for example with Litestream or the host's v
 
 ## Before selling
 
-- [ ] Terms of service and a privacy policy (receipts and financial data are sensitive; have a lawyer review).
+- [ ] Finish `public/terms.html` and `public/privacy.html`. They're marked drafts; fill in the bracketed details and have a lawyer review them.
 - [ ] Production domain with HTTPS, daily backups, and uptime monitoring.
 - [ ] Stripe account, a product with a monthly price, and the webhook.
 - [ ] Email sending domain (SPF/DKIM) for invites and resets.

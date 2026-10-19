@@ -23,7 +23,21 @@
 <div class="banner" id="banner" hidden></div>
 
 <!-- Sign in, sign up, reset, join -->
-<main class="auth" id="auth" hidden>
+<main class="landing" id="auth" hidden>
+  <section class="pitch">
+    <h2 class="headline">Books for every client, in one place.</h2>
+    <p class="pitchlead">Ledgerline gives your firm one workspace for all the companies you keep books for. Snap a receipt and it’s read, sorted and added. Cash and profit stay current without the spreadsheet chase.</p>
+    <ul class="points">
+      <li><b>Receipts read for you.</b> Upload photos and check the date, vendor, amount and category before they’re added.</li>
+      <li><b>Every client in its own tab.</b> Label companies by type and switch between them in one click.</li>
+      <li><b>Invite staff and clients.</b> Clients see only their own books, so they can add receipts themselves.</li>
+      <li><b>Reports clients understand.</b> Net profit, gross margin and where the money goes, by month or year.</li>
+      <li><b>Works on any phone.</b> Add it to the home screen and scan receipts on the spot.</li>
+    </ul>
+    <p class="price" id="price"></p>
+    <p class="legal"><a href="/terms.html">Terms</a> · <a href="/privacy.html">Privacy</a></p>
+  </section>
+  <div class="authcol">
   <section class="card authcard" data-auth="signin">
     <h2>Sign in</h2>
     <form id="f-signin" class="stack">
@@ -32,7 +46,7 @@
       <button class="btn wide">Sign in</button>
       <p class="err" role="alert"></p>
     </form>
-    <p class="alt"><button class="link" data-goauth="forgot">Forgot your password?</button></p>
+    <p class="alt"><button class="link" id="send-link">Email me a sign-in link instead</button> · <button class="link" data-goauth="forgot">Forgot password?</button></p>
     <p class="alt">New to Ledgerline? <button class="link" data-goauth="signup">Start a free trial</button></p>
   </section>
   <section class="card authcard" data-auth="signup" hidden>
@@ -77,6 +91,7 @@
       <p class="err" role="alert"></p>
     </form>
   </section>
+  </div>
 </main>
 
 <!-- Signed in -->

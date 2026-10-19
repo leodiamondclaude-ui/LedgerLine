@@ -57,8 +57,8 @@ async function submitForm(form, fn) {
   finally { btn.disabled = false; }
 }
 const params = new URLSearchParams(location.search);
-const INVITE = params.get('invite'), RESET = params.get('reset'), BILL = params.get('billing');
-if (INVITE || RESET || BILL) history.replaceState(null, '', '/');
+const INVITE = params.get('invite'), RESET = params.get('reset'), BILL = params.get('billing'), LOGIN = params.get('login');
+if (INVITE || RESET || BILL || LOGIN) history.replaceState(null, '', '/');
 
 $('#f-signin').addEventListener('submit', e => { e.preventDefault(); submitForm(e.target, async d => { ME = await api('POST', '/api/login', d); enterApp(); }); });
 $('#f-signup').addEventListener('submit', e => { e.preventDefault(); submitForm(e.target, async d => { ME = await api('POST', '/api/signup', d); enterApp(); }); });
@@ -66,6 +66,12 @@ $('#f-forgot').addEventListener('submit', e => { e.preventDefault(); submitForm(
 $('#f-reset').addEventListener('submit', e => { e.preventDefault(); submitForm(e.target, async d => { ME = await api('POST', '/api/password-reset', { token: RESET, password: d.password }); enterApp(); }); });
 $('#f-join').addEventListener('submit', e => { e.preventDefault(); submitForm(e.target, async d => { ME = await api('POST', `/api/invite-info/${encodeURIComponent(INVITE)}/accept`, d); enterApp(); }); });
 document.addEventListener('click', e => { const g = e.target.closest('[data-goauth]'); if (g) showAuth(g.dataset.goauth); });
+$('#send-link').addEventListener('click', async () => {
+  const err = $('#f-signin .err'), mail = $('#si-email').value.trim();
+  if (!mail) { say(err, 'Enter your email first, then press this again.'); $('#si-email').focus(); return; }
+  try { await api('POST', '/api/login-link/request', { email: mail }); say(err, 'If that email has an account, a sign-in link is on its way. It works once, for 15 minutes.', true); }
+  catch (e) { say(err, e.message); }
+});
 $('#signout').addEventListener('click', async () => { await api('POST', '/api/logout').catch(() => {}); ME = null; showAuth('signin'); });
 
 // ---------- signed in
@@ -349,6 +355,11 @@ document.addEventListener('change', async e => {
 // ---------- start
 (async () => {
   $('#sf-asof').value = today;
+  api('GET', '/api/public').then(p => { $('#price').textContent = p.billing ? `Free for ${p.trialDays} days, no card needed.${p.priceLabel ? ' Then ' + p.priceLabel + '.' : ''}` : ''; }).catch(() => {});
+  if (LOGIN) {
+    try { ME = await api('POST', '/api/login-link', { token: LOGIN }); return await enterApp(); }
+    catch (e) { showAuth('signin'); say($('#f-signin .err'), e.message); return; }
+  }
   if (RESET) return showAuth('reset');
   if (INVITE) {
     try {

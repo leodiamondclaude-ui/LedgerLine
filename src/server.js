@@ -104,6 +104,7 @@ export function createApp({ db = openDb(), appUrl = process.env.APP_URL || 'http
 
   const routes = [
     ['GET', '/healthz', () => ({ ok: true })],
+    ['GET', '/api/public', () => ({ receipts: receiptsEnabled(), billing: billingEnabled(), trialDays: TRIAL_DAYS, priceLabel: process.env.PRICE_LABEL || null })],
 
     // ---- accounts
     ['POST', '/api/signup', ctx => {
@@ -124,6 +125,24 @@ export function createApp({ db = openDb(), appUrl = process.env.APP_URL || 'http
       const ok = verifyPassword(password, u ? u.password_hash : 'scrypt$AAAAAAAAAAAAAAAAAAAAAA==$' + 'A'.repeat(86) + '==');
       if (!u || !ok) fail(401, 'Email or password is incorrect.');
       return signIn(ctx, u);
+    }],
+    // Passwordless sign-in: a one-time link, valid for 15 minutes
+    ['POST', '/api/login-link/request', async ctx => {
+      const mail = email(ctx.body.email);
+      if (!signInLimit('link|' + ctx.ip)) fail(429, 'Too many requests. Try again later.');
+      const u = one('SELECT * FROM users WHERE email = ?', mail);
+      if (u) {
+        const token = newToken();
+        run('INSERT INTO tokens (token_hash, kind, firm_id, user_id, expires_at) VALUES (?, ?, ?, ?, ?)', hashToken(token), 'login', u.firm_id, u.id, Date.now() + 15 * 60000);
+        await sendMail({ to: u.email, subject: 'Your Ledgerline sign-in link', text: `Sign in with this link (it works once, for 15 minutes):\n${appUrl}/?login=${token}\n\nIf you didn't ask for this, you can ignore this email.` }).catch(e => console.error(e));
+      }
+      return { ok: true };
+    }],
+    ['POST', '/api/login-link', ctx => {
+      const t = one("SELECT * FROM tokens WHERE token_hash = ? AND kind = 'login' AND expires_at > ?", hashToken(String(ctx.body.token || '')), Date.now());
+      if (!t) fail(400, 'This sign-in link has expired or was already used. Ask for a new one.');
+      run('DELETE FROM tokens WHERE token_hash = ?', t.token_hash);
+      return signIn(ctx, { id: t.user_id });
     }],
     ['POST', '/api/logout', ctx => { if (ctx.token) destroySession(db, ctx.token); ctx.setCookie = cookie('ll_sid', '', 0); return { ok: true }; }],
     ['GET', '/api/me', ctx => me(requireUser(ctx))],
