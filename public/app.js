@@ -155,7 +155,7 @@ function ledger() {
   const rows = [...TX].sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id), w = canWrite();
   $('#txb').innerHTML = rows.length ? rows.map(t => `<tr><td class="nowrap">${esc(t.date)}</td><td>${esc(t.description)}</td><td><span class="tag">${esc(t.category)}</span></td><td class="r nowrap ${t.type === 'in' ? 'pos' : 'neg'}">${t.type === 'in' ? '+' : '−'}${usd(t.amount, 2)}</td><td class="r nowrap">${w ? `<button class="link" data-edit="${t.id}">Edit</button> <button class="x" data-del="${t.id}" aria-label="Delete transaction">×</button>` : ''}</td></tr>`).join('') : '<tr><td colspan="5" class="mute">No transactions yet. Add a receipt or record one above.</td></tr>';
   $('#csv').href = `/api/companies/${CUR.id}/export.csv`;
-  $('#cocard').hidden = isClient();
+  $('#cocard').hidden = isClient(); $('#go-edit').hidden = isClient();
   $('#co-del').hidden = !canManage();
   if (document.activeElement !== $('#co-name')) $('#co-name').value = CUR.name;
   if (document.activeElement !== $('#co-label')) $('#co-label').value = CUR.label || '';
@@ -319,6 +319,7 @@ document.addEventListener('click', async e => {
   if (t.dataset.p) { PER = t.dataset.p; $$('.pill').forEach(b => b.setAttribute('aria-pressed', b === t)); reports(); return; }
   if (t.id === 'go-settings') { settings().catch(err => { $('#sync').textContent = err.message; }); return; }
   if (t.id === 'back') { view = CUR ? 'app' : isClient() ? 'empty' : 'setup'; layout(); return; }
+  if (t.id === 'go-edit') { tab = 'ledger'; layout(); const i = $('#co-name'); i.scrollIntoView({ block: 'center' }); i.focus(); i.select(); return; }
   if (t.id === 'go-scan') { tab = 'ledger'; layout(); if (ME.receipts) $('#rf').click(); else $('#tx-desc').focus(); return; }
   if (t.dataset.edit) {
     const x = TX.find(y => y.id === Number(t.dataset.edit)); if (!x) return; const f = $('#f-tx');
