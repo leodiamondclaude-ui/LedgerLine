@@ -202,9 +202,20 @@ async function shrink(file) {
   c.getContext('2d').drawImage(b, 0, 0, c.width, c.height);
   return c.toDataURL('image/jpeg', 0.85);
 }
+const norm = s => String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+const cents = v => Math.round((+v || 0) * 100);
+// A receipt matches an entry with the same direction and amount, dated within a day, from a similar vendor (or on the same day)
+function dupOf(q, i) {
+  const a = cents(q.amount), d = new Date(q.date);
+  const hit = TX.find(t => t.type === q.type && cents(t.amount) === a && Math.abs((new Date(t.date) - d) / 864e5) <= 1 && (t.date === q.date || norm(t.description).slice(0, 6) === norm(q.description).slice(0, 6)));
+  if (hit) return `already in the ledger as ${hit.date} · ${hit.description} · ${usd(hit.amount, 2)}`;
+  return Q.slice(0, i).some(p => p.date === q.date && cents(p.amount) === a && norm(p.description) === norm(q.description)) ? 'same as another photo in this batch' : '';
+}
+const markDups = () => Q.forEach((q, i) => { q.dup = dupOf(q, i); });
 function rq() {
+  markDups();
   const opt = q => (q.type === 'in' ? ME?.categories.in : ME?.categories.out || []).map(c => `<option${c === q.category ? ' selected' : ''}>${esc(c)}</option>`).join('');
-  $('#rq').innerHTML = Q.map((q, i) => `<tr class="rowedit"><td><input type="date" value="${esc(q.date)}" data-q="${i}" data-f="date" aria-label="Date"></td><td><input value="${esc(q.description)}" data-q="${i}" data-f="description" aria-label="Description"></td><td><select data-q="${i}" data-f="category" aria-label="Category">${opt(q)}</select></td><td><input type="number" step="0.01" value="${esc(q.amount)}" data-q="${i}" data-f="amount" class="amt" aria-label="Amount"></td><td><button class="x" data-qx="${i}" aria-label="Remove">×</button></td></tr>`).join('');
+  $('#rq').innerHTML = Q.map((q, i) => `<tr class="rowedit"><td><input type="date" value="${esc(q.date)}" data-q="${i}" data-f="date" aria-label="Date"></td><td><input value="${esc(q.description)}" data-q="${i}" data-f="description" aria-label="Description"></td><td><select data-q="${i}" data-f="category" aria-label="Category">${opt(q)}</select></td><td><input type="number" step="0.01" value="${esc(q.amount)}" data-q="${i}" data-f="amount" class="amt" aria-label="Amount"></td><td><button class="x" data-qx="${i}" aria-label="Remove">×</button></td></tr>${q.dup ? `<tr><td colspan="5" class="dupnote">Possible duplicate: ${esc(q.dup)}. It won’t be added unless you tick <label class="inl"><input type="checkbox" data-qk="${i}"${q.keep ? ' checked' : ''}> Add anyway</label></td></tr>` : ''}`).join('');
   $('#ract').hidden = !Q.length;
 }
 document.addEventListener('input', e => { const t = e.target; if (t.dataset.q !== undefined && Q[+t.dataset.q]) Q[+t.dataset.q][t.dataset.f] = t.value; });
@@ -339,7 +350,10 @@ document.addEventListener('click', async e => {
   if (t.dataset.qx !== undefined) { Q.splice(+t.dataset.qx, 1); rq(); return; }
   if (t.id === 'rclr') { Q = []; rq(); return; }
   if (t.id === 'radd') {
-    try { const added = await saving(api('POST', `/api/companies/${CUR.id}/transactions`, { entries: Q })); TX.push(...added); Q = []; rq(); $('#rst').textContent = `${added.length} added to the ledger.`; render(); }
+    markDups();
+    const ok = Q.filter(q => !q.dup || q.keep), held = Q.length - ok.length;
+    if (!ok.length) { $('#rst').textContent = `Nothing added: ${held} possible duplicate${held > 1 ? 's' : ''} below. Tick Add anyway to add ${held > 1 ? 'them' : 'it'}.`; return; }
+    try { const added = await saving(api('POST', `/api/companies/${CUR.id}/transactions`, { entries: ok.map(({ dup, keep, ...e }) => e) })); TX.push(...added); Q = Q.filter(q => !ok.includes(q)); rq(); $('#rst').textContent = `${added.length} added to the ledger.${held ? ` ${held} possible duplicate${held > 1 ? 's are' : ' is'} still listed for you to check.` : ''}`; render(); }
     catch (err) { $('#rst').textContent = err.message; }
     return;
   }
@@ -349,6 +363,7 @@ document.addEventListener('click', async e => {
 });
 document.addEventListener('change', async e => {
   const t = e.target;
+  if (t.dataset.qk !== undefined && Q[+t.dataset.qk]) { Q[+t.dataset.qk].keep = t.checked; return; }
   if (t.dataset.role) { try { await saving(api('PATCH', `/api/members/${t.dataset.role}`, { role: t.value })); } catch (err) { say($('#iv-err'), err.message); await loadTeam(); } }
 });
 

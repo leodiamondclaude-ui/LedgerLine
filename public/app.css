@@ -89,6 +89,8 @@ input:focus-visible,select:focus-visible,button:focus-visible,a:focus-visible,te
 .err:empty{display:none}
 .err.good{color:var(--in)}
 .note{font-size:13px;color:var(--mute);margin:8px 0 0}
+.dupnote{color:var(--out);font-size:13px;padding-top:0}
+.inl{display:inline-flex;flex-direction:row;align-items:center;gap:4px;font-size:13px;color:var(--ink)}
 .bar{display:grid;grid-template-columns:110px 1fr 130px;gap:10px;align-items:center;font-size:14px;margin:7px 0}
 .bar i{display:block;height:10px;border-radius:3px;background:var(--acc);width:0}
 .row{display:flex;justify-content:space-between;gap:12px;padding:6px 0;font-size:14px}
