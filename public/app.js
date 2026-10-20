@@ -44,7 +44,7 @@ const sizeBars = root => root.querySelectorAll('[data-w]').forEach(el => { el.st
 
 // ---------- signed out
 function showAuth(name) {
-  $('#auth').hidden = false; $('#app').hidden = true; $('#topnav').hidden = true; $('#go-edit').hidden = true; $('#banner').hidden = true; $('#firmname').textContent = ''; $('#sync').textContent = '';
+  $('#auth').hidden = false; $('#app').hidden = true; $('#topnav').hidden = true; $('#go-edit').hidden = true; $('#conew').hidden = true; $('#banner').hidden = true; $('#firmname').textContent = ''; $('#sync').textContent = '';
   $$('[data-auth]').forEach(s => { s.hidden = s.dataset.auth !== name; });
   const first = $(`[data-auth="${name}"] input:not([readonly])`); if (first) first.focus();
 }
@@ -99,7 +99,7 @@ function banner() {
 function layout() {
   const app = view === 'app';
   $('#setup').hidden = view !== 'setup'; $('#empty').hidden = view !== 'empty'; $('#settings').hidden = view !== 'settings';
-  $('#nav').hidden = !app; $('#go-edit').hidden = !app || isClient();
+  $('#nav').hidden = !app; $('#go-edit').hidden = !app || isClient(); $('#conew').hidden = !app || isClient();
   ['overview', 'ledger', 'reports'].forEach(s => { $('#' + s).hidden = !(app && tab === s); });
   $$('#nav button').forEach(b => b.setAttribute('aria-current', b.dataset.v === tab));
   $('#sf-cancel').hidden = !CUR;
@@ -124,8 +124,7 @@ function coBar() {
   $('#lablist').innerHTML = LABELS.map(l => `<option value="${esc(l)}">`).join('');
   const on = c => !!CUR && CUR.id === c.id && view === 'app';
   $('#cotabs').innerHTML = COS.filter(c => !LF || c.label === LF || (CUR && c.id === CUR.id)).map(c =>
-    `<button class="ftab" role="tab" aria-selected="${on(c)}" data-co="${c.id}"><span><i class="dot ${lc(c.label)}"></i>${esc(c.name)}</span><small>${c.label ? esc(c.label) : 'No label'}</small></button>`).join('')
-    + (isClient() ? '' : `<button class="ftab add" id="conew" aria-selected="${view === 'setup'}">+ New company</button>`);
+    `<button class="ftab" role="tab" aria-selected="${on(c)}" data-co="${c.id}"><span><i class="dot ${lc(c.label)}"></i>${esc(c.name)}</span><small>${c.label ? esc(c.label) : 'No label'}</small></button>`).join('');
   const sel = $('#cotabs [aria-selected="true"]'); if (sel) sel.scrollIntoView({ block: 'nearest', inline: 'nearest' });
 }
 function render() { if (!CUR) return; overview(); ledger(); reports(); }
